@@ -42,7 +42,10 @@ pub struct GlyphsOrder {
 }
 impl GlyphsOrder {
     pub fn new(glyphs: &str) -> Self {
-        GlyphsOrder { data: glyphs.chars().collect(), i: 0 }
+        GlyphsOrder {
+            data: glyphs.chars().collect(),
+            i: 0,
+        }
     }
 }
 impl GlyphsIter for GlyphsOrder {
@@ -92,6 +95,6 @@ pub fn image_to_unicode(
     }
     match GrayImage::from_vec(img_width as u32, img_height as u32, img_vec) {
         Some(img) => Ok(img),
-        None => Err("cannot create immage".to_owned())
+        None => Err("cannot create immage".to_owned()),
     }
 }

@@ -68,7 +68,7 @@ fn main() {
                 .required(false),
         )
         .get_matches();
-    
+
     // parse command line argument
     let image_in = matches.value_of("image").unwrap();
     let font_file = matches
@@ -86,7 +86,7 @@ fn main() {
         Err(e) => panic!("failed to read {}, {}", font_file, e),
         Ok(_) => match font::parse(&data) {
             Ok(font) => font,
-            Err(_) => panic!("failed to parse {}", font_file),
+            Err(e) => panic!("failed to parse '{}': {:?}", font_file, e),
         },
     };
 
