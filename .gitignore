@@ -1,0 +1,8 @@
+/target/
+
+# out test
+out*
+out/
+
+# vscode
+/.vscode/
