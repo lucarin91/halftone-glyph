@@ -1,15 +1,15 @@
-extern crate font_rs;
 extern crate image;
 extern crate rand;
+extern crate rusttype;
 
-use font_rs::font::Font;
 use image::imageops::resize;
 use image::DynamicImage;
-use image::{imageops::FilterType, GrayImage};
+use image::{imageops::FilterType, GrayImage, Luma};
 use rand::prelude::*;
+use rusttype::{point, Font, Scale};
 
 pub trait GlyphsIter {
-    fn next(&mut self, font: &Font) -> Option<u16>;
+    fn next(&mut self) -> char;
 }
 
 pub struct GlyphsRandom {
@@ -25,13 +25,11 @@ impl GlyphsRandom {
     }
 }
 impl GlyphsIter for GlyphsRandom {
-    fn next(&mut self, font: &Font) -> Option<u16> {
+    fn next(&mut self) -> char {
         unsafe {
-            font.lookup_glyph_id(
-                *self
-                    .data
-                    .get_unchecked(self.rng.gen_range(0, self.data.len())) as u32,
-            )
+            *self
+                .data
+                .get_unchecked(self.rng.gen_range(0, self.data.len()))
         }
     }
 }
@@ -49,16 +47,16 @@ impl GlyphsOrder {
     }
 }
 impl GlyphsIter for GlyphsOrder {
-    fn next(&mut self, font: &Font) -> Option<u16> {
+    fn next(&mut self) -> char {
         let g = unsafe { *self.data.get_unchecked(self.i) };
         self.i = (self.i + 1) % self.data.len();
-        font.lookup_glyph_id(g as u32)
+        g
     }
 }
 
 pub fn image_to_unicode(
     img: DynamicImage,
-    tile: usize,
+    tile: u32,
     font: Font,
     mut glyphs: impl GlyphsIter,
 ) -> Result<GrayImage, String> {
@@ -68,33 +66,36 @@ pub fn image_to_unicode(
 
     let new_with = (origin_width as f32 / tile as f32).floor() as u32;
     let new_height = (origin_height as f32 / tile as f32).floor() as u32;
-    let img = resize(&img, new_with, new_height, FilterType::Lanczos3);
+    let img = resize(
+        &img,
+        new_with as u32,
+        new_height as u32,
+        FilterType::Lanczos3,
+    );
 
-    let img_width = new_with as usize * tile;
-    let img_height = new_height as usize * tile;
-    let mut img_vec = vec![0; img_width * img_height];
+    let img_width = new_with * tile;
+    let img_height = new_height * tile;
+
+    println!("{}x{}", new_with, new_height);
+    let mut image = DynamicImage::new_luma8(img_width, img_height).to_luma();
     for (j, r) in img.rows().enumerate() {
         for (i, p) in r.enumerate() {
-            if let Some(glyph_id) = glyphs.next(&font) {
-                match font.render_glyph(glyph_id, p.0[0] as u32 * tile as u32 / 255) {
-                    Some(glyph) => {
-                        for jj in 0..glyph.height {
-                            for ii in 0..glyph.width {
-                                img_vec
-                                    [(img_width * j * tile + (img_width * jj)) + (i * tile + ii)] =
-                                    glyph.data[glyph.width * jj + ii];
-                            }
-                        }
-                    }
-                    None => return Err(format!("failed to render {}", glyph_id)),
-                }
-            } else {
-                return Err("glyph not found".to_owned());
+            // TODO: check that the glyph is correctly rendered
+            let g = font.glyph(glyphs.next());
+            let g = g.scaled(Scale::uniform((p.0[0] as u32 * tile / 255) as f32));
+            let g = g.positioned(point(0.0, 0.0));
+            if let Some(bounding_box) = g.pixel_bounding_box() {
+                g.draw(|x, y, v| {
+                    let cx = (tile - bounding_box.width() as u32) / 2;
+                    let cy = (tile - bounding_box.height() as u32) / 2;
+                    image.put_pixel(
+                        (i as u32 * tile) + x + cx,
+                        (j as u32 * tile) + y + cy,
+                        Luma([(v * 255.0) as u8]),
+                    );
+                });
             }
         }
     }
-    match GrayImage::from_vec(img_width as u32, img_height as u32, img_vec) {
-        Some(img) => Ok(img),
-        None => Err("cannot create immage".to_owned()),
-    }
+    Ok(image)
 }
