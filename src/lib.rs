@@ -1,12 +1,17 @@
+extern crate font_kit;
 extern crate image;
+extern crate pathfinder_geometry;
 extern crate rand;
-extern crate rusttype;
 
+use font_kit::canvas::{Canvas, Format, RasterizationOptions};
+use font_kit::font::Font;
+use font_kit::hinting::HintingOptions;
 use image::imageops::resize;
 use image::DynamicImage;
 use image::{imageops::FilterType, GrayImage, Luma};
+use pathfinder_geometry::transform2d::Transform2F;
+use pathfinder_geometry::vector::{Vector2F, Vector2I};
 use rand::prelude::*;
-use rusttype::{point, Font, Scale};
 
 pub trait GlyphsIter {
     fn next(&mut self) -> char;
@@ -76,24 +81,27 @@ pub fn image_to_unicode(
     let img_width = new_with * tile;
     let img_height = new_height * tile;
 
-    println!("{}x{}", new_with, new_height);
     let mut image = DynamicImage::new_luma8(img_width, img_height).to_luma();
     for (j, r) in img.rows().enumerate() {
         for (i, p) in r.enumerate() {
-            // TODO: check that the glyph is correctly rendered
-            let g = font.glyph(glyphs.next());
-            let g = g.scaled(Scale::uniform((p.0[0] as u32 * tile / 255) as f32));
-            let g = g.positioned(point(0.0, 0.0));
-            if let Some(bounding_box) = g.pixel_bounding_box() {
-                g.draw(|x, y, v| {
-                    let cx = (tile - bounding_box.width() as u32) / 2;
-                    let cy = (tile - bounding_box.height() as u32) / 2;
-                    image.put_pixel(
-                        (i as u32 * tile) + x + cx,
-                        (j as u32 * tile) + y + cy,
-                        Luma([(v * 255.0) as u8]),
-                    );
-                });
+            let glyph_id = font.glyph_for_char(glyphs.next()).unwrap();
+            let mut canvas = Canvas::new(Vector2I::splat(tile as i32), Format::A8);
+            font.rasterize_glyph(
+                &mut canvas,
+                glyph_id,
+                (p.0[0] as u32 * tile / 255) as f32,
+                Transform2F::from_translation(Vector2F::new(0.0, tile as f32)),
+                HintingOptions::None,
+                RasterizationOptions::GrayscaleAa,
+            )
+            .unwrap();
+
+            for (ii, p) in canvas.pixels.into_iter().enumerate() {
+                image.put_pixel(
+                    (i as u32 * tile) + (ii as u32 % canvas.size.x() as u32),
+                    (j as u32 * tile) + (ii as u32 / canvas.size.x() as u32),
+                    Luma([p as u8]),
+                );
             }
         }
     }

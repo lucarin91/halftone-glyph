@@ -1,6 +1,6 @@
 extern crate imguni;
 
-extern crate rusttype;
+extern crate font_kit;
 #[macro_use]
 extern crate clap;
 extern crate font_loader;
@@ -8,14 +8,14 @@ extern crate image;
 extern crate rand;
 
 use clap::{App, Arg};
+use font_kit::font::Font;
 use font_loader::system_fonts;
-use rusttype::Font;
+use imguni::{image_to_unicode, GlyphsOrder, GlyphsRandom};
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+use std::sync::Arc;
 use std::vec::Vec;
-
-use imguni::{image_to_unicode, GlyphsOrder, GlyphsRandom};
 
 fn main() {
     let matches = App::new("imguni")
@@ -107,9 +107,9 @@ fn main() {
     };
 
     // load font
-    let font = match Font::try_from_bytes(&font_data) {
-        Some(font) => font,
-        None => panic!("Failed to load font"),
+    let font = match Font::from_bytes(Arc::new(font_data), 0) {
+        Ok(font) => font,
+        Err(e) => panic!("Failed to load font: {}", e),
     };
 
     // load image file
