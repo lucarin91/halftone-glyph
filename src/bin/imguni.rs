@@ -3,19 +3,18 @@ extern crate imguni;
 extern crate font_kit;
 #[macro_use]
 extern crate clap;
-extern crate font_loader;
 extern crate image;
 extern crate rand;
 
 use clap::{App, Arg};
+use font_kit::family_name::FamilyName;
 use font_kit::font::Font;
-use font_loader::system_fonts;
+use font_kit::properties::Properties;
+use font_kit::source::SystemSource;
 use imguni::{image_to_unicode, GlyphsOrder, GlyphsRandom};
-use std::fs::File;
-use std::io::Read;
+use std::io;
+use std::io::Write;
 use std::path::Path;
-use std::sync::Arc;
-use std::vec::Vec;
 
 fn main() {
     let matches = App::new("imguni")
@@ -79,46 +78,39 @@ fn main() {
     let tile: u32 = matches.value_of("tile").unwrap_or("15").parse().unwrap();
     let no_random = matches.is_present("no-random");
 
-    // load font file
-    let font_data = if matches.is_present("font") {
+    // load font
+    let font = if matches.is_present("font") {
         let font_arg = matches.value_of("font").unwrap();
         if Path::new(font_arg).exists() {
             println!("Use font file '{}'", font_arg);
-            let mut f = File::open(font_arg).unwrap();
-            let mut data = Vec::new();
-            f.read_to_end(&mut data).unwrap();
-            data
+            Font::from_path(font_arg, 0)
         } else {
-            let mut property = system_fonts::FontPropertyBuilder::new()
-                .family(font_arg)
-                .build();
-            if system_fonts::query_specific(&mut property).is_empty() {
-                panic!("System font '{}' not founded", font_arg)
+            match SystemSource::new().select_family_by_name(font_arg) {
+                Ok(h) => {
+                    println!("Use system font '{}'", font_arg);
+                    h.fonts()[0].load()
+                }
+                Err(e) => panic!("System font '{}': {}", font_arg, e),
             }
-            println!("Use system font '{}'", font_arg);
-            let (font_data, _) = system_fonts::get(&property).unwrap();
-            font_data
         }
     } else {
         println!("Use system monospace font");
-        let property = system_fonts::FontPropertyBuilder::new().monospace().build();
-        let (font, _) = system_fonts::get(&property).unwrap();
-        font
+        SystemSource::new()
+            .select_best_match(&[FamilyName::Monospace], &Properties::new())
+            .unwrap()
+            .load()
     };
+    let font = font.expect("Cannot laod font");
 
-    // load font
-    let font = match Font::from_bytes(Arc::new(font_data), 0) {
-        Ok(font) => font,
-        Err(e) => panic!("Failed to load font: {}", e),
-    };
-
-    // load image file
+    start(&format!("Load image '{}'", image_in));
     let img = match image::open(image_in) {
         Ok(img) => img,
         Err(e) => panic!("Err: {}", e),
     };
+    done();
 
     // convert the image
+    start("Converting");
     let res = if no_random {
         image_to_unicode(img, tile, font, GlyphsOrder::new(glyphs))
     } else {
@@ -127,5 +119,16 @@ fn main() {
     match res {
         Ok(img) => img.save(image_out).unwrap(),
         Err(e) => panic!("Err: {}", e),
-    }
+    };
+    done();
+    println!("Immage saved to '{}'", image_out);
+}
+
+fn start(msg: &str) {
+    print!("{}... ", msg);
+    io::stdout().flush().unwrap();
+}
+
+fn done() {
+    println!("done");
 }
