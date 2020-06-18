@@ -113,13 +113,13 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: imguni-x86_64-unknown-linux-gnu.tar.gz
+            name: hatogl-x86_64-unknown-linux-gnu.tar.gz
           - target: x86_64-apple-darwin
             os: macOS-latest
-            name: imguni-x86_64-apple-darwin.tar.gz
+            name: hatogl-x86_64-apple-darwin.tar.gz
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            name: imguni-x86_64-pc-windows-msvc.zip
+            name: hatogl-x86_64-pc-windows-msvc.zip
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -141,16 +141,16 @@ jobs:
       - name: Prepare build artifacts [Windows]
         if: matrix.os == 'windows-latest'
         run: |
-          mv target/${{ matrix.target }}/release/imguni.exe .
-          strip imguni.exe
-          7z a ${{ matrix.name }} imguni.exe assets/
+          mv target/${{ matrix.target }}/release/hatogl.exe .
+          strip hatogl.exe
+          7z a ${{ matrix.name }} hatogl.exe
 
       - name: Prepare build artifacts [-nix]
         if: matrix.os != 'windows-latest'
         run: |
-          mv target/${{ matrix.target }}/release/imguni .
-          strip imguni
-          tar czvf ${{ matrix.name }} imguni assets/
+          mv target/${{ matrix.target }}/release/hatogl .
+          strip hatogl
+          tar czvf ${{ matrix.name }} hatogl
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v1
@@ -170,31 +170,31 @@ jobs:
       - name: Download releases from github_build
         uses: actions/download-artifact@v1
         with:
-          name: imguni-x86_64-unknown-linux-gnu.tar.gz
+          name: hatogl-x86_64-unknown-linux-gnu.tar.gz
           path: .
       - name: Download releases from github_build
         uses: actions/download-artifact@v1
         with:
-          name: imguni-x86_64-apple-darwin.tar.gz
+          name: hatogl-x86_64-apple-darwin.tar.gz
           path: .
       - name: Download releases from github_build
         uses: actions/download-artifact@v1
         with:
-          name: imguni-x86_64-pc-windows-msvc.zip
+          name: hatogl-x86_64-pc-windows-msvc.zip
           path: .
 
       - name: Generate checksums
-        run: for file in imguni-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
+        run: for file in hatogl-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
 
       - name: Create GitHub release ${{ matrix.target }}
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            imguni-x86_64-unknown-linux-gnu.tar.gz
-            imguni-x86_64-unknown-linux-gnu.tar.gz.sha256
-            imguni-x86_64-apple-darwin.tar.gz
-            imguni-x86_64-apple-darwin.tar.gz.sha256
-            imguni-x86_64-pc-windows-msvc.zip
-            imguni-x86_64-pc-windows-msvc.zip.sha256
+            hatogl-x86_64-unknown-linux-gnu.tar.gz
+            hatogl-x86_64-unknown-linux-gnu.tar.gz.sha256
+            hatogl-x86_64-apple-darwin.tar.gz
+            hatogl-x86_64-apple-darwin.tar.gz.sha256
+            hatogl-x86_64-pc-windows-msvc.zip
+            hatogl-x86_64-pc-windows-msvc.zip.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

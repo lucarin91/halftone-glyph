@@ -1,6 +1,6 @@
 [package]
-name = "imguni"
-version = "0.2.0"
+name = "halftoneglyph"
+version = "0.3.0"
 authors = ["Luca Rinaldi <lucarin@protonmail.com>"]
 edition = "2018"
 

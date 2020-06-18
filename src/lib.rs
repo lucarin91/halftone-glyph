@@ -103,7 +103,7 @@ pub fn image_to_unicode(
         match font.glyph_for_char(glyphs.next()) {
             Some(glyph_id) => {
                 let mut canvas = Canvas::new(Vector2I::splat(tile as i32), Format::A8);
-                let size = (p.0[0] as u32 * tile / 255) as f32;
+                let size = map(p.0[0] as u32, 0, 255, 1, tile);
 
                 let raster_rect = font.raster_bounds(
                     glyph_id,
@@ -133,4 +133,9 @@ pub fn image_to_unicode(
         }
     }
     Ok(image)
+}
+
+fn map(x: u32, in_start: u32, in_end: u32, out_start: u32, out_end: u32) -> f32 {
+    (x - in_start) as f32 / (in_end - in_start) as f32 * (out_end - out_start) as f32
+        + out_start as f32
 }

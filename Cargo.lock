@@ -361,6 +361,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "halftoneglyph"
+version = "0.3.0"
+dependencies = [
+ "clap",
+ "font-kit",
+ "image",
+ "pathfinder_geometry",
+ "rand",
+]
+
+[[package]]
 name = "hermit-abi"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -385,17 +396,6 @@ dependencies = [
  "png",
  "scoped_threadpool",
  "tiff",
-]
-
-[[package]]
-name = "imguni"
-version = "0.2.0"
-dependencies = [
- "clap",
- "font-kit",
- "image",
- "pathfinder_geometry",
- "rand",
 ]
 
 [[package]]

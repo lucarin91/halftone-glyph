@@ -1,4 +1,4 @@
-extern crate imguni;
+extern crate halftoneglyph;
 
 extern crate font_kit;
 #[macro_use]
@@ -11,7 +11,7 @@ use font_kit::family_name::FamilyName;
 use font_kit::font::Font;
 use font_kit::properties::Properties;
 use font_kit::source::SystemSource;
-use imguni::{image_to_unicode, GlyphsOrder, GlyphsRandom};
+use halftoneglyph::{image_to_unicode, GlyphsOrder, GlyphsRandom};
 use std::io;
 use std::io::Write;
 use std::path::Path;
