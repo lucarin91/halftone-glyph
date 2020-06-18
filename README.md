@@ -1,6 +1,6 @@
 # Halftone Glyph: Image Converter
 
-Halftone Glyph, a tool inspired by the halftone printing technique, generates images in which pixels are substituted by characters.
+Halftone Glyph, a tool inspired by the [halftone](https://en.wikipedia.org/wiki/Halftone) printing technique, generates images in which pixels are substituted by characters.
 The brightness of the pixel is encoded with the size of the character.
 
 <img src="./data/michael.png" width=400px/> <img src="./data/michael_gliph.png" width=400px/>
